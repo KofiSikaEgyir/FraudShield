@@ -31,6 +31,47 @@ class DatabaseService:
         """
         Retrieve recent API prediction logs.
         """
+    def get_prediction_summary(self) -> dict:
+        """
+        Retrieve summary statistics for API prediction logs.
+        """
+
+        query = text("""
+            SELECT
+                COUNT(*) AS total_predictions,
+
+                COUNT(*) FILTER (
+                    WHERE prediction_label = 'Fraud'
+                ) AS fraud_predictions,
+
+                COUNT(*) FILTER (
+                    WHERE prediction_label = 'Non-Fraud'
+                ) AS non_fraud_predictions,
+
+                COUNT(*) FILTER (
+                    WHERE risk_level = 'High Risk'
+                ) AS high_risk_predictions,
+
+                COUNT(*) FILTER (
+                    WHERE risk_level = 'Moderate Risk'
+                ) AS moderate_risk_predictions,
+
+                COUNT(*) FILTER (
+                    WHERE risk_level = 'Low Risk'
+                ) AS low_risk_predictions,
+
+                ROUND(AVG(fraud_probability), 6) AS average_fraud_probability,
+
+                MAX(created_at) AS latest_prediction_time
+
+            FROM api_prediction_logs;
+        """)
+
+        with self.engine.connect() as connection:
+            result = connection.execute(query)
+            row = result.mappings().one()
+
+        return dict(row)
 
         query = text("""
             SELECT

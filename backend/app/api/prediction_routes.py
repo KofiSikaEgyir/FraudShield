@@ -68,3 +68,14 @@ def get_high_risk_predictions(
         "count": len(high_risk_records),
         "records": high_risk_records
     })
+
+
+@router.get("/summary")
+def get_prediction_summary():
+    """
+    Retrieve dashboard-style summary statistics for API prediction logs.
+    """
+
+    summary = database_service.get_prediction_summary()
+
+    return jsonable_encoder(summary)
