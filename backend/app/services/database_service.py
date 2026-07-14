@@ -27,6 +27,71 @@ class DatabaseService:
     """
     Service class for writing FraudShield API prediction logs to PostgreSQL.
     """
+    def get_prediction_history(self, limit: int = 10) -> list[dict]:
+        """
+        Retrieve recent API prediction logs.
+        """
+
+        query = text("""
+            SELECT
+                log_id,
+                transaction_type,
+                amount,
+                oldbalance_org,
+                newbalance_orig,
+                prediction_label,
+                prediction_code,
+                fraud_probability,
+                risk_level,
+                alert_message,
+                model_name,
+                model_version,
+                source_system,
+                created_at
+            FROM api_prediction_logs
+            ORDER BY created_at DESC
+            LIMIT :limit;
+        """)
+
+        with self.engine.connect() as connection:
+            result = connection.execute(query, {"limit": limit})
+            rows = result.mappings().all()
+
+        return [dict(row) for row in rows]
+
+
+    def get_high_risk_predictions(self, limit: int = 10) -> list[dict]:
+        """
+        Retrieve recent high-risk fraud prediction logs.
+        """
+
+        query = text("""
+            SELECT
+                log_id,
+                transaction_type,
+                amount,
+                oldbalance_org,
+                newbalance_orig,
+                prediction_label,
+                prediction_code,
+                fraud_probability,
+                risk_level,
+                alert_message,
+                model_name,
+                model_version,
+                source_system,
+                created_at
+            FROM api_prediction_logs
+            WHERE risk_level = 'High Risk'
+            ORDER BY created_at DESC
+            LIMIT :limit;
+        """)
+
+        with self.engine.connect() as connection:
+            result = connection.execute(query, {"limit": limit})
+            rows = result.mappings().all()
+
+        return [dict(row) for row in rows]
 
     def __init__(self):
         self.engine = create_engine(DATABASE_URL)
