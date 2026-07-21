@@ -366,6 +366,210 @@ http://127.0.0.1:8000/docs
 
 ---
 
+---
+
+## Dashboard Usage
+
+FraudShield includes a simple web dashboard for demonstrating the fraud detection and SMS alert simulation workflow in a browser.
+
+The dashboard provides a visual interface for testing transactions, viewing prediction results, checking whether SMS alerts were triggered, and monitoring recent fraud prediction records. It communicates with the FastAPI backend and retrieves records saved in the PostgreSQL database.
+
+### Dashboard Features
+
+The dashboard allows a user to:
+
+- Enter transaction details through a web form
+- Predict whether a transaction is fraudulent or non-fraudulent
+- View the fraud probability and assigned risk level
+- See whether an SMS alert was required
+- View the simulated SMS alert message for high-risk transactions
+- Monitor recent prediction history
+- Monitor high-risk SMS alert logs
+- View summary statistics such as total predictions, fraud predictions, high-risk cases, and SMS simulations
+
+---
+
+### Start the FastAPI Server
+
+Before opening the dashboard, start the FastAPI server from the project root folder:
+
+```powershell
+python -m uvicorn backend.app.main:app --reload
+```
+
+The server should run locally at:
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+### Open the Dashboard
+
+After the server starts, open this URL in your browser:
+
+```text
+http://127.0.0.1:8000/static/dashboard.html
+```
+
+This will open the FraudShield web dashboard.
+
+---
+
+### Dashboard Demo Flow
+
+The dashboard can be used to demonstrate both high-risk and low-risk transaction cases.
+
+#### High-Risk Transaction Example
+
+Use the following values in the dashboard form:
+
+| Field | Value |
+|---|---|
+| Customer Phone | `0240000001` |
+| Transaction Type | `TRANSFER` |
+| Amount | `250000` |
+| Old Balance | `250000` |
+| New Balance | `0` |
+
+Expected result:
+
+```text
+Prediction: Fraud
+Risk Level: High Risk
+Fraud Probability: 0.9865
+SMS Required: true
+SMS Status: simulated
+```
+
+Expected SMS message:
+
+```text
+FraudShield Alert: A High Risk TRANSFER transaction of GHS 250,000.00 was detected with fraud probability 0.9865. Do not share your PIN or OTP. If you did not authorize this transaction, contact your provider immediately.
+```
+
+This shows that the system detected a high-risk transaction and triggered a simulated SMS fraud alert.
+
+---
+
+#### Low-Risk Transaction Example
+
+Use the following values in the dashboard form:
+
+| Field | Value |
+|---|---|
+| Customer Phone | `0240000002` |
+| Transaction Type | `PAYMENT` |
+| Amount | `100` |
+| Old Balance | `5000` |
+| New Balance | `4900` |
+
+Expected result:
+
+```text
+Prediction: Non-Fraud
+Risk Level: Low Risk
+Fraud Probability: 0.0000
+SMS Required: false
+SMS Status: not_required
+```
+
+This shows that the system correctly avoids sending SMS alerts for low-risk transactions.
+
+---
+
+### Dashboard Output Sections
+
+The dashboard contains four main output areas.
+
+#### 1. Summary Cards
+
+The summary cards display:
+
+- Total predictions
+- Fraud predictions
+- High-risk cases
+- SMS simulations
+
+These cards are updated automatically after a new prediction is made.
+
+#### 2. Transaction Prediction Result
+
+After submitting a transaction, the dashboard displays:
+
+- Prediction result
+- Risk level
+- Fraud probability
+- SMS required status
+- SMS status
+- Fraud alert message
+- Simulated SMS message, where applicable
+
+#### 3. Recent Prediction History
+
+This table displays the most recent transaction predictions. It includes:
+
+- Log ID
+- Customer phone
+- Transaction type
+- Amount
+- Prediction label
+- Risk level
+- Fraud probability
+- SMS status
+
+#### 4. High-Risk SMS Alert Logs
+
+This table displays high-risk cases where SMS alert information is important. It includes:
+
+- Log ID
+- Customer phone
+- Transaction type
+- Amount
+- SMS required status
+- SMS status
+- SMS message
+
+---
+
+### Dashboard Endpoint
+
+The dashboard is served by FastAPI as a static HTML file:
+
+```text
+/static/dashboard.html
+```
+
+Full local dashboard URL:
+
+```text
+http://127.0.0.1:8000/static/dashboard.html
+```
+
+---
+
+### Dashboard API Connections
+
+The dashboard uses the following FastAPI endpoints:
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/predict/summary` | Loads summary cards |
+| POST | `/predict/` | Sends transaction details for fraud prediction |
+| GET | `/predict/history?limit=5` | Loads recent prediction history |
+| GET | `/predict/high-risk?limit=5` | Loads high-risk SMS alert logs |
+
+---
+
+### Dashboard Note
+
+The SMS alert shown on the dashboard is currently simulated. No real SMS is sent to a customer phone number in the current prototype. This design is intentional because live SMS delivery requires integration with an external SMS provider such as Twilio, Hubtel, Mnotify, Nalo Solutions, or Africa’s Talking.
+
+The dashboard is therefore used to demonstrate the fraud detection and SMS alert generation workflow before moving to live SMS integration.
+
+---
+
 ## Sample API Request
 
 Endpoint:
