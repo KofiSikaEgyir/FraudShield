@@ -29,11 +29,46 @@ class DatabaseService:
     """
     def get_prediction_history(self, limit: int = 10) -> list[dict]:
         """
-        Retrieve recent API prediction logs.
+        Retrieve recent API prediction logs, including SMS alert details.
         """
+
+        query = text("""
+            SELECT
+                log_id,
+                customer_phone,
+                transaction_type,
+                amount,
+                oldbalance_org,
+                newbalance_orig,
+                prediction_label,
+                prediction_code,
+                fraud_probability,
+                risk_level,
+                alert_message,
+                sms_required,
+                sms_status,
+                sms_message,
+                sms_provider,
+                sms_sent_at,
+                sms_error,
+                model_name,
+                model_version,
+                source_system,
+                created_at
+            FROM api_prediction_logs
+            ORDER BY created_at DESC
+            LIMIT :limit;
+        """)
+
+        with self.engine.connect() as connection:
+            result = connection.execute(query, {"limit": limit})
+            rows = result.mappings().all()
+
+        return [dict(row) for row in rows]
+
     def get_prediction_summary(self) -> dict:
         """
-        Retrieve summary statistics for API prediction logs.
+        Retrieve summary statistics for API prediction logs, including SMS alert summary.
         """
 
         query = text("""
@@ -60,9 +95,35 @@ class DatabaseService:
                     WHERE risk_level = 'Low Risk'
                 ) AS low_risk_predictions,
 
+                COUNT(*) FILTER (
+                    WHERE sms_required = TRUE
+                ) AS sms_required_count,
+
+                COUNT(*) FILTER (
+                    WHERE sms_required = FALSE
+                ) AS sms_not_required_count,
+
+                COUNT(*) FILTER (
+                    WHERE sms_status = 'simulated'
+                ) AS sms_simulated_count,
+
+                COUNT(*) FILTER (
+                    WHERE sms_status = 'sent'
+                ) AS sms_sent_count,
+
+                COUNT(*) FILTER (
+                    WHERE sms_status = 'failed'
+                ) AS sms_failed_count,
+
+                COUNT(*) FILTER (
+                    WHERE sms_status = 'not_required'
+                ) AS sms_not_required_status_count,
+
                 ROUND(AVG(fraud_probability), 6) AS average_fraud_probability,
 
-                MAX(created_at) AS latest_prediction_time
+                MAX(created_at) AS latest_prediction_time,
+
+                MAX(sms_sent_at) AS latest_sms_alert_time
 
             FROM api_prediction_logs;
         """)
@@ -73,42 +134,16 @@ class DatabaseService:
 
         return dict(row)
 
-        query = text("""
-            SELECT
-                log_id,
-                transaction_type,
-                amount,
-                oldbalance_org,
-                newbalance_orig,
-                prediction_label,
-                prediction_code,
-                fraud_probability,
-                risk_level,
-                alert_message,
-                model_name,
-                model_version,
-                source_system,
-                created_at
-            FROM api_prediction_logs
-            ORDER BY created_at DESC
-            LIMIT :limit;
-        """)
-
-        with self.engine.connect() as connection:
-            result = connection.execute(query, {"limit": limit})
-            rows = result.mappings().all()
-
-        return [dict(row) for row in rows]
-
 
     def get_high_risk_predictions(self, limit: int = 10) -> list[dict]:
         """
-        Retrieve recent high-risk fraud prediction logs.
+        Retrieve recent high-risk fraud prediction logs, including SMS alert details.
         """
 
         query = text("""
             SELECT
                 log_id,
+                customer_phone,
                 transaction_type,
                 amount,
                 oldbalance_org,
@@ -118,6 +153,12 @@ class DatabaseService:
                 fraud_probability,
                 risk_level,
                 alert_message,
+                sms_required,
+                sms_status,
+                sms_message,
+                sms_provider,
+                sms_sent_at,
+                sms_error,
                 model_name,
                 model_version,
                 source_system,
