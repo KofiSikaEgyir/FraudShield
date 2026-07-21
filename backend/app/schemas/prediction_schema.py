@@ -11,8 +11,15 @@ from pydantic import BaseModel, Field, field_validator
 class TransactionInput(BaseModel):
     """
     Input schema for a mobile money-like transaction.
-    These are the fields required by the saved Random Forest model.
+    These are the fields required by the saved Random Forest model,
+    plus customer phone number for SMS alert simulation.
     """
+
+    customer_phone: Optional[str] = Field(
+        None,
+        description="Customer phone number for SMS fraud alert",
+        examples=["0240000001"]
+    )
 
     type: Literal["CASH_IN", "CASH_OUT", "DEBIT", "PAYMENT", "TRANSFER"] = Field(
         ...,
@@ -58,6 +65,7 @@ class PredictionResponse(BaseModel):
     """
     Output schema returned by the fraud prediction API.
     """
+
     log_id: Optional[int] = Field(
         None,
         description="Database log ID for the saved prediction record"
@@ -86,4 +94,24 @@ class PredictionResponse(BaseModel):
     alert_message: str = Field(
         ...,
         description="Fraud prevention alert message"
+    )
+
+    sms_required: Optional[bool] = Field(
+        None,
+        description="Whether an SMS alert was required"
+    )
+
+    sms_status: Optional[str] = Field(
+        None,
+        description="SMS status: not_required, simulated, sent, or failed"
+    )
+
+    sms_message: Optional[str] = Field(
+        None,
+        description="SMS alert message sent or simulated"
+    )
+
+    sms_provider: Optional[str] = Field(
+        None,
+        description="SMS provider used"
     )

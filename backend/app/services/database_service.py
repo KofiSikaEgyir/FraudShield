@@ -137,11 +137,26 @@ class DatabaseService:
     def __init__(self):
         self.engine = create_engine(DATABASE_URL)
 
-    def save_prediction_log(self, transaction: dict, prediction_result: dict) -> int:
+    def save_prediction_log(
+        self,
+        transaction: dict,
+        prediction_result: dict,
+        sms_result: dict | None = None
+    ) -> int:
         """
-        Save transaction input and prediction output into api_prediction_logs.
-        Returns the created log_id.
+        Save transaction input, prediction output, and SMS alert result
+        into api_prediction_logs. Returns the created log_id.
         """
+
+        if sms_result is None:
+            sms_result = {
+                "sms_required": False,
+                "sms_status": "not_required",
+                "sms_message": None,
+                "sms_provider": "Simulation",
+                "sms_sent_at": None,
+                "sms_error": None
+            }
 
         insert_query = text("""
             INSERT INTO api_prediction_logs (
@@ -156,7 +171,14 @@ class DatabaseService:
                 alert_message,
                 model_name,
                 model_version,
-                source_system
+                source_system,
+                customer_phone,
+                sms_required,
+                sms_status,
+                sms_message,
+                sms_provider,
+                sms_sent_at,
+                sms_error
             )
             VALUES (
                 :transaction_type,
@@ -170,7 +192,14 @@ class DatabaseService:
                 :alert_message,
                 :model_name,
                 :model_version,
-                :source_system
+                :source_system,
+                :customer_phone,
+                :sms_required,
+                :sms_status,
+                :sms_message,
+                :sms_provider,
+                :sms_sent_at,
+                :sms_error
             )
             RETURNING log_id;
         """)
@@ -187,7 +216,14 @@ class DatabaseService:
             "alert_message": prediction_result["alert_message"],
             "model_name": "Random Forest",
             "model_version": "v1.0.0",
-            "source_system": "FastAPI Prototype"
+            "source_system": "FastAPI Prototype",
+            "customer_phone": transaction.get("customer_phone"),
+            "sms_required": sms_result["sms_required"],
+            "sms_status": sms_result["sms_status"],
+            "sms_message": sms_result["sms_message"],
+            "sms_provider": sms_result["sms_provider"],
+            "sms_sent_at": sms_result["sms_sent_at"],
+            "sms_error": sms_result["sms_error"]
         }
 
         with self.engine.begin() as connection:
