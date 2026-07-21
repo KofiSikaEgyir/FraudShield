@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FraudShield Dashboard</title>
+
+    <style>
+        :root {
+            --blue: #1d4ed8;
+            --blue-dark: #1e3a8a;
+            --blue-light: #eff6ff;
+            --red: #dc2626;
+            --red-dark: #991b1b;
+            --red-light: #fef2f2;
+            --white: #ffffff;
+            --gray-text: #374151;
+            --gray-muted: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--blue-light);
+            margin: 0;
+            padding: 0;
+            color: var(--gray-text);
+        }
+
+        header {
+            background: var(--blue);
+            color: var(--white);
+            padding: 20px 40px;
+            border-bottom: 4px solid var(--red);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        header p {
+            margin: 6px 0 0;
+            color: #dbeafe;
+        }
+
+        main {
+            padding: 30px 40px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(29, 78, 216, 0.1);
+            border-top: 3px solid var(--blue);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            font-size: 15px;
+            color: var(--gray-muted);
+        }
+
+        .metric {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--blue-dark);
+        }
+
+        #fraudPredictions,
+        #highRiskPredictions {
+            color: var(--red);
+        }
+
+        .section {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 22px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(29, 78, 216, 0.1);
+        }
+
+        .section h2 {
+            margin-top: 0;
+            color: var(--blue-dark);
+            border-bottom: 2px solid var(--blue-light);
+            padding-bottom: 10px;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            align-items: end;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--gray-text);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #c7d2fe;
+            border-radius: 6px;
+            background: var(--white);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--blue);
+        }
+
+        button {
+            padding: 11px 16px;
+            background: var(--blue);
+            color: var(--white);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: var(--blue-dark);
+        }
+
+        .result {
+            margin-top: 18px;
+            padding: 15px;
+            border-radius: 8px;
+            background: var(--blue-light);
+            border-left: 5px solid var(--blue);
+            white-space: pre-wrap;
+        }
+
+        .high {
+            border-left-color: var(--red);
+            background: var(--red-light);
+        }
+
+        .low {
+            border-left-color: var(--blue);
+            background: var(--blue-light);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: var(--blue-light);
+            color: var(--blue-dark);
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-high {
+            background: var(--red-light);
+            color: var(--red-dark);
+        }
+
+        .badge-low {
+            background: var(--blue-light);
+            color: var(--blue-dark);
+        }
+
+        .badge-sms {
+            background: #dbeafe;
+            color: var(--blue-dark);
+        }
+
+        .muted {
+            color: var(--gray-muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 1100px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            form {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 700px) {
+            main {
+                padding: 20px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h1>FraudShield Dashboard</h1>
+    <p>AI-Based Mobile Money Fraud Risk Detection and SMS Alert Simulation</p>
+</header>
+
+<main>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Total Predictions</h3>
+            <div class="metric" id="totalPredictions">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Fraud Predictions</h3>
+            <div class="metric" id="fraudPredictions">0</div>
+        </div>
+
+        <div class="card">
+            <h3>High-Risk Cases</h3>
+            <div class="metric" id="highRiskPredictions">0</div>
+        </div>
+
+        <div class="card">
+            <h3>SMS Simulated</h3>
+            <div class="metric" id="smsSimulated">0</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Test Transaction Prediction</h2>
+        <p class="muted">
+            Enter transaction details below. High-risk transactions will trigger simulated SMS alerts.
+        </p>
+
+        <form id="predictionForm">
+            <div>
+                <label>Customer Phone</label>
+                <input type="text" id="customerPhone" value="0240000001" required>
+            </div>
+
+            <div>
+                <label>Transaction Type</label>
+                <select id="transactionType">
+                    <option value="TRANSFER">TRANSFER</option>
+                    <option value="CASH_OUT">CASH_OUT</option>
+                    <option value="PAYMENT">PAYMENT</option>
+                    <option value="CASH_IN">CASH_IN</option>
+                    <option value="DEBIT">DEBIT</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Amount</label>
+                <input type="number" id="amount" value="250000" required>
+            </div>
+
+            <div>
+                <label>Old Balance</label>
+                <input type="number" id="oldBalance" value="250000" required>
+            </div>
+
+            <div>
+                <label>New Balance</label>
+                <input type="number" id="newBalance" value="0" required>
+            </div>
+
+            <button type="submit">Predict Fraud Risk</button>
+        </form>
+
+        <div id="predictionResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="section">
+        <h2>Recent Prediction History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Log ID</th>
+                    <th>Phone</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Prediction</th>
+                    <th>Risk</th>
+                    <th>Fraud Probability</th>
+                    <th>SMS Status</th>
+                </tr>
+            </thead>
+            <tbody id="historyTable"></tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>High-Risk SMS Alert Logs</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Log ID</th>
+                    <th>Phone</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>SMS Required</th>
+                    <th>SMS Status</th>
+                    <th>SMS Message</th>
+                </tr>
+            </thead>
+            <tbody id="highRiskTable"></tbody>
+        </table>
+    </div>
+
+</main>
+
+<script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    async function loadSummary() {
+        const response = await fetch(`${API_BASE}/predict/summary`);
+        const data = await response.json();
+
+        document.getElementById("totalPredictions").textContent = data.total_predictions ?? 0;
+        document.getElementById("fraudPredictions").textContent = data.fraud_predictions ?? 0;
+        document.getElementById("highRiskPredictions").textContent = data.high_risk_predictions ?? 0;
+        document.getElementById("smsSimulated").textContent = data.sms_simulated_count ?? 0;
+    }
+
+    function riskBadge(riskLevel) {
+        if (riskLevel === "High Risk") {
+            return `<span class="badge badge-high">${riskLevel}</span>`;
+        }
+
+        return `<span class="badge badge-low">${riskLevel}</span>`;
+    }
+
+    function smsBadge(status) {
+        return `<span class="badge badge-sms">${status ?? "N/A"}</span>`;
+    }
+
+    async function loadHistory() {
+        const response = await fetch(`${API_BASE}/predict/history?limit=5`);
+        const data = await response.json();
+
+        const tbody = document.getElementById("historyTable");
+        tbody.innerHTML = "";
+
+        data.records.forEach(row => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${row.log_id}</td>
+                    <td>${row.customer_phone ?? ""}</td>
+                    <td>${row.transaction_type}</td>
+                    <td>GHS ${Number(row.amount).toLocaleString()}</td>
+                    <td>${row.prediction_label}</td>
+                    <td>${riskBadge(row.risk_level)}</td>
+                    <td>${Number(row.fraud_probability).toFixed(4)}</td>
+                    <td>${smsBadge(row.sms_status)}</td>
+                </tr>
+            `;
+        });
+    }
+
+    async function loadHighRiskLogs() {
+        const response = await fetch(`${API_BASE}/predict/high-risk?limit=5`);
+        const data = await response.json();
+
+        const tbody = document.getElementById("highRiskTable");
+        tbody.innerHTML = "";
+
+        data.records.forEach(row => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${row.log_id}</td>
+                    <td>${row.customer_phone ?? ""}</td>
+                    <td>${row.transaction_type}</td>
+                    <td>GHS ${Number(row.amount).toLocaleString()}</td>
+                    <td>${row.sms_required}</td>
+                    <td>${smsBadge(row.sms_status)}</td>
+                    <td>${row.sms_message ?? ""}</td>
+                </tr>
+            `;
+        });
+    }
+
+    async function submitPrediction(event) {
+        event.preventDefault();
+
+        const payload = {
+            customer_phone: document.getElementById("customerPhone").value,
+            type: document.getElementById("transactionType").value,
+            amount: Number(document.getElementById("amount").value),
+            oldbalanceOrg: Number(document.getElementById("oldBalance").value),
+            newbalanceOrig: Number(document.getElementById("newBalance").value)
+        };
+
+        const response = await fetch(`${API_BASE}/predict/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        const resultBox = document.getElementById("predictionResult");
+        resultBox.style.display = "block";
+        resultBox.className = "result";
+
+        if (data.risk_level === "High Risk") {
+            resultBox.classList.add("high");
+        } else {
+            resultBox.classList.add("low");
+        }
+
+        resultBox.textContent =
+            `Prediction: ${data.prediction}\n` +
+            `Risk Level: ${data.risk_level}\n` +
+            `Fraud Probability: ${data.fraud_probability}\n` +
+            `SMS Required: ${data.sms_required}\n` +
+            `SMS Status: ${data.sms_status}\n\n` +
+            `Alert Message:\n${data.alert_message}\n\n` +
+            `SMS Message:\n${data.sms_message ?? "No SMS required for this transaction."}`;
+
+        await loadSummary();
+        await loadHistory();
+        await loadHighRiskLogs();
+    }
+
+    document.getElementById("predictionForm").addEventListener("submit", submitPrediction);
+
+    loadSummary();
+    loadHistory();
+    loadHighRiskLogs();
+</script>
+
+</body>
+</html>

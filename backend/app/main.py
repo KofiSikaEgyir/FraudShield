@@ -4,8 +4,10 @@
 # =====================================================
 
 from fastapi import FastAPI
-
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 from backend.app.api.prediction_routes import router as prediction_router
+
 
 
 app = FastAPI(
@@ -13,6 +15,11 @@ app = FastAPI(
     description="AI-based mobile money fraud risk detection and prevention API.",
     version="1.0.0"
 )
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 @app.get("/")
